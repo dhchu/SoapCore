@@ -155,22 +155,31 @@ namespace SoapCore
 				// Find the element for the operation's data
 				xmlReader.ReadStartElement(operation.Name, operation.Contract.Namespace);
 
-				for (int i = 0; i < parameters.Length; i++)
-				{
-					var parameterName = parameters[i].GetCustomAttribute<MessageParameterAttribute>()?.Name ?? parameters[i].Name;
-					xmlReader.MoveToStartElement(parameterName, operation.Contract.Namespace);
-					if (xmlReader.IsStartElement(parameterName, operation.Contract.Namespace))
-					{
-						var elementType = parameters[i].ParameterType.GetElementType();
-						if (elementType == null || parameters[i].ParameterType.IsArray)
-							elementType = parameters[i].ParameterType;
-						string objectNamespace = operation.Contract.Namespace;
+                do
+                {
+                    if (xmlReader.IsStartElement())
+                    {
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            var parameter = parameters[i];
+                            var parameterName = parameter.GetCustomAttribute<MessageParameterAttribute>()?.Name ?? parameter.Name;
 
-						var serializer = new DataContractSerializer(elementType, parameterName, objectNamespace);
-						//arguments.Add(serializer.ReadObject(xmlReader, verifyObjectName: true));
-						arguments[i] = serializer.ReadObject(xmlReader, verifyObjectName: true);
-					}
-				}
+                            if (xmlReader.LocalName == parameterName &&
+                                xmlReader.NamespaceURI == operation.Contract.Namespace)
+                            {
+                                var elementType = parameter.ParameterType.GetElementType();
+                                if (elementType == null || parameter.ParameterType.IsArray)
+                                    elementType = parameter.ParameterType;
+                                string objectNamespace = operation.Contract.Namespace;
+
+                                var serializer = new DataContractSerializer(elementType, parameterName, objectNamespace);
+                                arguments[i] = serializer.ReadObject(xmlReader, verifyObjectName: true);
+
+                                break;
+                            }
+                        }
+                    }
+                } while (xmlReader.Read());
 			}
 
 			var outParams = operation.DispatchMethod.GetParameters().Where(x => x.IsOut || x.ParameterType.IsByRef).ToArray();
