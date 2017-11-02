@@ -146,8 +146,9 @@ namespace SoapCore
 		private object[] GetRequestArguments(Message requestMessage, OperationDescription operation, ref Dictionary<string, object> outArgs)
 		{
 			var parameters = operation.DispatchMethod.GetParameters().Where(x => !x.IsOut && !x.ParameterType.IsByRef).ToArray();
-			var arguments = new List<object>();
-
+			//var arguments = new List<object>();
+			var arguments = new object[parameters.Length];
+			
 			// Deserialize request wrapper and object
 			using (var xmlReader = requestMessage.GetReaderAtBodyContents())
 			{
@@ -166,7 +167,8 @@ namespace SoapCore
 						string objectNamespace = operation.Contract.Namespace;
 
 						var serializer = new DataContractSerializer(elementType, parameterName, objectNamespace);
-						arguments.Add(serializer.ReadObject(xmlReader, verifyObjectName: true));
+						//arguments.Add(serializer.ReadObject(xmlReader, verifyObjectName: true));
+						arguments[i] = serializer.ReadObject(xmlReader, verifyObjectName: true);
 					}
 				}
 			}
