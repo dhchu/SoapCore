@@ -68,6 +68,9 @@ namespace SoapCore
 			{
 				var serializer = new DataContractSerializer(_result.GetType(), _resultName, _serviceNamespace);
 				serializer.WriteObject(writer, _result);
+				
+				var xmlSerializer = new XmlSerializer(_result.GetType(), null, null, new XmlRootAttribute(_resultName), _serviceNamespace);
+                		xmlSerializer.Serialize(writer, _result);
 			}
 
 			writer.WriteEndElement();
